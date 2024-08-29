@@ -71,7 +71,8 @@ const MapComponent = () => {
 		const data = {
 			houseMarkers: markers,
 			driverMarkers: sourceMarkers,
-			destinationMarkers: destinationMarkers
+			destinationMarkers: destinationMarkers,
+			allMarkers: [...markers, ...sourceMarkers, ...destinationMarkers]
 		};
 
 		getRequest(data);

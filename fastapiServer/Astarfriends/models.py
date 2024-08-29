@@ -9,3 +9,4 @@ class Markers(BaseModel):
     houseMarkers: List[Marker]
     driverMarkers: List[Marker]
     destinationMarkers: List[Marker]
+    allMarkers: List[Marker]
