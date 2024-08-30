@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+
+from components.vehicleRouting import vehicle_routing
 from models import Markers
 import requests
 
@@ -6,7 +8,7 @@ router = APIRouter()
 
 def post_calculate_route(data):
     osrmCoordinates = ';'.join([f'{marker.position[1]},{marker.position[0]}' for marker in data.allMarkers])
-    url = f'http://router.project-osrm.org/table/v1/driving/{osrmCoordinates}?annotations=duration'
+    url = f'http://router.project-osrm.org/table/v1/driving/{osrmCoordinates}?annotations=distance'
 
     try:
         response = requests.get(url)
@@ -22,8 +24,12 @@ def post_calculate_route(data):
 
 @router.post("/data")
 async def return_data(data: Markers):
-    completeData = post_calculate_route(data)
-    print(completeData)
+    osrmData = post_calculate_route(data)
+
+    if osrmData is None:
+        return {"error": "An error occurred while calculating the route."}
+
+    vehicle_routing(osrmData)
     processed_data = {
         "house_count": len(data.houseMarkers),
         "driver_count": len(data.driverMarkers),
