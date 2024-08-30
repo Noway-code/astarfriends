@@ -29,11 +29,12 @@ async def return_data(data: Markers):
     if osrmData is None:
         return {"error": "An error occurred while calculating the route."}
 
-    vehicle_routing(osrmData)
-    processed_data = {
-        "house_count": len(data.houseMarkers),
+    markercounts = {
         "driver_count": len(data.driverMarkers),
         "destination_count": len(data.destinationMarkers),
-        "total_markers": len(data.houseMarkers) + len(data.driverMarkers) + len(data.destinationMarkers)
+        "house_count": len(data.houseMarkers),
+        "total_markers": len(data.driverMarkers) + len(data.destinationMarkers) + len(data.houseMarkers)
     }
-    return {"processed_data": processed_data}
+    vehicle_routing(osrmData, markercounts)
+
+    return {"markercounts": markercounts}

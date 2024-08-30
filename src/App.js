@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
@@ -12,27 +12,27 @@ const customIcon = L.icon({
 });
 
 const sourceIcon = L.icon({
-	iconUrl: 'https://cdn-icons-png.freepik.com/512/5723/5723249.png', // You can replace this with your preferred source icon
+	iconUrl: 'https://cdn-icons-png.freepik.com/512/5723/5723249.png',
 	iconSize: [48, 48],
 	iconAnchor: [22, 38],
 	popupAnchor: [-3, -36]
 });
 
 const destinationIcon = L.icon({
-	iconUrl: 'https://cdn1.iconfinder.com/data/icons/color-bold-style/21/14_2-512.png', // You can replace this with your preferred destination icon
+	iconUrl: 'https://cdn1.iconfinder.com/data/icons/color-bold-style/21/14_2-512.png',
 	iconSize: [38, 38],
 	iconAnchor: [22, 38],
 	popupAnchor: [-3, -36]
 });
 
 const MapComponent = () => {
-	const [markers, setMarkers] = useState([{ id: 1, position: [51.505, -0.09] }]);
-	const [sourceMarkers, setSourceMarkers] = useState([]);
-	const [destinationMarkers, setDestinationMarkers] = useState([]);
+	const [driverMarkers, setDriverMarkers] = useState([]);
+	const [markers, setMarkers] = useState([{ id: 0, position: [51.505, -0.09] }]);
+	const [destinationMarkers, setDestinationMarkers] = useState([{ id: 0, position: [51.515, -0.1] }]);
 
 	const addMarker = () => {
 		const newMarker = {
-			id: markers.length + 1,
+			id: markers.length,
 			position: [51.505 + Math.random() * 0.02, -0.09 + Math.random() * 0.02]
 		};
 		setMarkers([...markers, newMarker]);
@@ -40,18 +40,10 @@ const MapComponent = () => {
 
 	const addSourceMarker = () => {
 		const newSourceMarker = {
-			id: sourceMarkers.length + 1,
+			id: driverMarkers.length,
 			position: [51.505 + Math.random() * 0.02, -0.09 + Math.random() * 0.02]
 		};
-		setSourceMarkers([...sourceMarkers, newSourceMarker]);
-	};
-
-	const addDestinationMarker = () => {
-		const newDestinationMarker = {
-			id: destinationMarkers.length + 1,
-			position: [51.505 + Math.random() * 0.02, -0.09 + Math.random() * 0.02]
-		};
-		setDestinationMarkers([...destinationMarkers, newDestinationMarker]);
+		setDriverMarkers([...driverMarkers, newSourceMarker]);
 	};
 
 	async function getRequest(data) {
@@ -69,10 +61,10 @@ const MapComponent = () => {
 
 	const sendMarkersToServer = () => {
 		const data = {
-			houseMarkers: markers,
-			driverMarkers: sourceMarkers,
+			driverMarkers: driverMarkers,
 			destinationMarkers: destinationMarkers,
-			allMarkers: [...markers, ...sourceMarkers, ...destinationMarkers]
+			houseMarkers: markers,
+			allMarkers: [...driverMarkers, ...destinationMarkers, ...markers]
 		};
 
 		getRequest(data);
@@ -80,8 +72,8 @@ const MapComponent = () => {
 
 	const updateMarkerPosition = (id, newPosition, type = 'regular') => {
 		if (type === 'source') {
-			setSourceMarkers(
-				sourceMarkers.map(marker =>
+			setDriverMarkers(
+				driverMarkers.map(marker =>
 					marker.id === id ? { ...marker, position: newPosition } : marker
 				)
 			);
@@ -105,7 +97,6 @@ const MapComponent = () => {
 		updateMarkerPosition(id, [newPosition.lat, newPosition.lng], type);
 	};
 
-
 	return (
 		<div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#82bfb7' }}>
 			<div style={{ flex: 1 }}>
@@ -114,9 +105,6 @@ const MapComponent = () => {
 				</button>
 				<button onClick={addSourceMarker} style={{ margin: '10px', padding: '10px' }}>
 					Add Driver Marker
-				</button>
-				<button onClick={addDestinationMarker} style={{ margin: '10px', padding: '10px' }}>
-					Add Destination Marker
 				</button>
 				<button onClick={sendMarkersToServer} style={{ margin: '10px', padding: '10px', color:"forestgreen", fontWeight:"bold", fontSize:"14px"}}>
 					Send data down to server
@@ -136,12 +124,15 @@ const MapComponent = () => {
 								dragend: event => handleDragEnd(marker.id, event),
 							}}
 						>
+							<Tooltip permanent>
+								ID: {marker.id}
+							</Tooltip>
 							<Popup>
 								Marker {marker.id}: {marker.position[0].toFixed(4)}, {marker.position[1].toFixed(4)}
 							</Popup>
 						</Marker>
 					))}
-					{sourceMarkers.map(sourceMarker => (
+					{driverMarkers.map(sourceMarker => (
 						<Marker
 							key={sourceMarker.id}
 							position={sourceMarker.position}
@@ -151,6 +142,9 @@ const MapComponent = () => {
 								dragend: event => handleDragEnd(sourceMarker.id, event, 'source'),
 							}}
 						>
+							<Tooltip permanent>
+								ID: {sourceMarker.id}
+							</Tooltip>
 							<Popup>
 								Source Marker {sourceMarker.id}: {sourceMarker.position[0].toFixed(4)}, {sourceMarker.position[1].toFixed(4)}
 							</Popup>
@@ -166,6 +160,9 @@ const MapComponent = () => {
 								dragend: event => handleDragEnd(destinationMarker.id, event, 'destination'),
 							}}
 						>
+							<Tooltip permanent>
+								ID: {destinationMarker.id}
+							</Tooltip>
 							<Popup>
 								Destination Marker {destinationMarker.id}: {destinationMarker.position[0].toFixed(4)}, {destinationMarker.position[1].toFixed(4)}
 							</Popup>
@@ -203,7 +200,7 @@ const MapComponent = () => {
 					</tr>
 					</thead>
 					<tbody>
-					{sourceMarkers.map(marker => (
+					{driverMarkers.map(marker => (
 						<tr key={marker.id}>
 							<td>{marker.id}</td>
 							<td>{marker.position[0].toFixed(4)}</td>

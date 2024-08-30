@@ -1,15 +1,18 @@
 import json
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
+import numpy as np
 
-def create_data_model(osrmdata):
-    #round osrmdata to int
-    rounded = [[round(i) for i in row] for row in osrmdata]
-    print(osrmdata)
+def create_data_model(osrmdata, types, markercounts):
+    # Round osrmdata['distances'] to int
+    rounded = [[round(i) for i in row] for row in osrmdata['distances']]
+
+    end_depots = np.full(markercounts['driver_count'], types['destinations'][0]).tolist()
     data = {
         'distance_matrix': rounded,
-        "num_vehicles": 9,
-        "depot": 0,
+        "num_vehicles": markercounts['driver_count'],
+        "start_depots": types['drivers'],
+        "end_depots": end_depots,
     }
     # Instantiate the data problem.
     print(data)
@@ -37,16 +40,33 @@ def print_solution(data, manager, routing, solution):
         max_route_distance = max(route_distance, max_route_distance)
     print(f"Maximum of the route distances: {max_route_distance}m")
 
-def vehicle_routing(osrmdata):
-    # Create the routing index manager.
+def gettypeindex(allmarkers, markercounts):
+    # all markers are in the order of drivers, destinations, houses and we know the counts of each
+    # return a broken down dicti
+    drivers = list(range(markercounts['driver_count']))
+    destinations = list(range(markercounts['driver_count'], markercounts['driver_count'] + markercounts['destination_count']))
+    houses = list(range(markercounts['driver_count'] + markercounts['destination_count'], markercounts['total_markers']))
 
-    data = create_data_model(osrmdata['distances'])
+    # make a 2d list of the indexes
+    return {
+        'drivers': drivers,
+        'destinations': destinations,
+        'houses': houses
+    }
+
+def vehicle_routing(osrmdata, markercounts):
+    # Create the routing index manager.
+    types = gettypeindex(osrmdata['distances'], markercounts)
+    print(types)
+
+    data = create_data_model(osrmdata, types, markercounts)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(
         len(data["distance_matrix"]),
         data["num_vehicles"],
-        data["depot"],
+        data["start_depots"],  # Pass start depots
+        data["end_depots"]
     )
 
     # Create Routing Model.
@@ -70,7 +90,7 @@ def vehicle_routing(osrmdata):
     routing.AddDimension(
         transit_callback_index,
         5,  # no slack
-        100000,  # vehicle maximum travel distance
+        50000,  # vehicle maximum travel distance
         True,  # start cumul to zero
         dimension_name,
     )
@@ -90,4 +110,4 @@ def vehicle_routing(osrmdata):
     if solution:
         print_solution(data, manager, routing, solution)
     else:
-        print("No solution found !")
+        print("No solution found!")
