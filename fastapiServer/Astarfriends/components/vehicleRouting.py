@@ -3,11 +3,12 @@ from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import numpy as np
 
-def create_data_model(osrmdata, types, markercounts):
-    # Round osrmdata['distances'] to int
-    rounded = [[round(i) for i in row] for row in osrmdata['distances']]
 
-    end_depots = np.full(markercounts['driver_count'], types['destinations'][0]).tolist()
+def create_data_model(distances, types, markercounts):
+    # Round distances to int
+    rounded = [[round(i) for i in row] for row in distances]
+
+    end_depots = np.full(markercounts['driver_count'], types['destinations']).tolist()
     data = {
         'distance_matrix': rounded,
         "num_vehicles": markercounts['driver_count'],
@@ -19,30 +20,42 @@ def create_data_model(osrmdata, types, markercounts):
 
     return data
 
+
 def print_solution(data, manager, routing, solution):
-    """Prints solution on console."""
     print(f"Objective: {solution.ObjectiveValue()}")
     max_route_distance = 0
+    routes = []
+
     for vehicle_id in range(data["num_vehicles"]):
         index = routing.Start(vehicle_id)
         plan_output = f"Route for vehicle {vehicle_id}:\n"
         route_distance = 0
+        route = []
+
         while not routing.IsEnd(index):
-            plan_output += f" {manager.IndexToNode(index)} -> "
+            node_index = manager.IndexToNode(index)
+            route.append(node_index)
+            plan_output += f" {node_index} -> "
             previous_index = index
             index = solution.Value(routing.NextVar(index))
             route_distance += routing.GetArcCostForVehicle(
                 previous_index, index, vehicle_id
             )
-        plan_output += f"{manager.IndexToNode(index)}\n"
+
+        node_index = manager.IndexToNode(index)
+        route.append(node_index)
+        plan_output += f"{node_index}\n"
         plan_output += f"Distance of the route: {route_distance}m\n"
         print(plan_output)
+        routes.append(route)
         max_route_distance = max(route_distance, max_route_distance)
-    print(f"Maximum of the route distances: {max_route_distance}m")
 
-def gettypeindex(allmarkers, markercounts):
-    # all markers are in the order of drivers, destinations, houses and we know the counts of each
-    # return a broken down dicti
+    print(f"Maximum of the route distances: {max_route_distance}m")
+    return routes
+
+
+def get_index_type(markercounts):
+    # all markers are in the order of drivers, destinations, houses, and we know the counts of each
     drivers = list(range(markercounts['driver_count']))
     destinations = list(range(markercounts['driver_count'], markercounts['driver_count'] + markercounts['destination_count']))
     houses = list(range(markercounts['driver_count'] + markercounts['destination_count'], markercounts['total_markers']))
@@ -54,18 +67,19 @@ def gettypeindex(allmarkers, markercounts):
         'houses': houses
     }
 
+
 def vehicle_routing(osrmdata, markercounts):
-    # Create the routing index manager.
-    types = gettypeindex(osrmdata['distances'], markercounts)
+    distances = osrmdata['distances']
+    types = get_index_type(markercounts)
     print(types)
 
-    data = create_data_model(osrmdata, types, markercounts)
+    data = create_data_model(distances, types, markercounts)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(
         len(data["distance_matrix"]),
         data["num_vehicles"],
-        data["start_depots"],  # Pass start depots
+        data["start_depots"],
         data["end_depots"]
     )
 
@@ -90,7 +104,7 @@ def vehicle_routing(osrmdata, markercounts):
     routing.AddDimension(
         transit_callback_index,
         5,  # no slack
-        50000,  # vehicle maximum travel distance
+        999999999,  # vehicle maximum travel distance
         True,  # start cumul to zero
         dimension_name,
     )
@@ -106,8 +120,9 @@ def vehicle_routing(osrmdata, markercounts):
     # Solve the problem.
     solution = routing.SolveWithParameters(search_parameters)
 
-    # Print solution on console.
+    # Print solution on console and return routes.
     if solution:
-        print_solution(data, manager, routing, solution)
+        return print_solution(data, manager, routing, solution)
     else:
         print("No solution found!")
+        return None

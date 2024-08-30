@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, Polyline } from 'react-leaflet';
+import polyline from '@mapbox/polyline';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
@@ -29,11 +30,12 @@ const MapComponent = () => {
 	const [driverMarkers, setDriverMarkers] = useState([]);
 	const [markers, setMarkers] = useState([{ id: 0, position: [51.505, -0.09] }]);
 	const [destinationMarkers, setDestinationMarkers] = useState([{ id: 0, position: [51.515, -0.1] }]);
+	const [polylines, setPolylines] = useState([]);
 
 	const addMarker = () => {
 		const newMarker = {
 			id: markers.length,
-			position: [51.505 + Math.random() * 0.02, -0.09 + Math.random() * 0.02]
+			position: [51.505 + Math.random() * 0.09, -0.09 + Math.random() * 0.09]
 		};
 		setMarkers([...markers, newMarker]);
 	};
@@ -41,7 +43,7 @@ const MapComponent = () => {
 	const addSourceMarker = () => {
 		const newSourceMarker = {
 			id: driverMarkers.length,
-			position: [51.505 + Math.random() * 0.02, -0.09 + Math.random() * 0.02]
+			position: [51.505 + Math.random() * 0.09, -0.09 + Math.random() * 0.09]
 		};
 		setDriverMarkers([...driverMarkers, newSourceMarker]);
 	};
@@ -56,7 +58,20 @@ const MapComponent = () => {
 			},
 			body: JSON.stringify(data),
 		});
-		console.log(response.status);
+
+		let result = await response.json();
+		let decodedPolylines = decodePolyline(result);
+		setPolylines(decodedPolylines);
+	}
+
+	function decodePolyline(encodedPolyline) {
+		let decodePolylines = [];
+		encodedPolyline.polylines.forEach(encoded => {
+			const decodedPolyline = polyline.decode(encoded, 5);
+			decodePolylines.push(decodedPolyline);
+		});
+
+		return decodePolylines;
 	}
 
 	const sendMarkersToServer = () => {
@@ -96,6 +111,7 @@ const MapComponent = () => {
 		const newPosition = event.target.getLatLng();
 		updateMarkerPosition(id, [newPosition.lat, newPosition.lng], type);
 	};
+	const colors = ['blue', 'red', 'green', 'magenta','#215d17', 'cyan', 'purple', 'yellow', 'pink', 'brown' ];
 
 	return (
 		<div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#82bfb7' }}>
@@ -167,6 +183,9 @@ const MapComponent = () => {
 								Destination Marker {destinationMarker.id}: {destinationMarker.position[0].toFixed(4)}, {destinationMarker.position[1].toFixed(4)}
 							</Popup>
 						</Marker>
+					))}
+					{polylines.map((polyline, index) => (
+						<Polyline key={index} positions={polyline} color={colors[index % colors.length]} weight={5} />
 					))}
 				</MapContainer>
 			</div>
