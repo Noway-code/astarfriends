@@ -1,9 +1,11 @@
+// src/pages/PartyPage.js
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, Polyline } from 'react-leaflet';
 import polyline from '@mapbox/polyline';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import '../App.css';
+import { useNavigate } from 'react-router-dom';
 
 const customIcon = L.icon({
 	iconUrl: 'https://cdn-icons-png.flaticon.com/512/609/609803.png',
@@ -28,14 +30,17 @@ const destinationIcon = L.icon({
 
 const PartyPage = () => {
 	const [driverMarkers, setDriverMarkers] = useState([]);
-	const [markers, setMarkers] = useState([{ id: 0, position: [51.505, -0.09] }]);
-	const [destinationMarkers, setDestinationMarkers] = useState([{ id: 0, position: [51.515, -0.1] }]);
+	const [markers, setMarkers] = useState([{ id: 0, position: [51.505, -0.09], name: 'House Marker 0', editable: false }]);
+	const [destinationMarkers, setDestinationMarkers] = useState([{ id: 0, position: [51.515, -0.1], name: 'Destination Marker 0', editable: false }]);
 	const [polylines, setPolylines] = useState([]);
+	const navigate = useNavigate();
 
 	const addMarker = () => {
 		const newMarker = {
 			id: markers.length,
-			position: [51.505 + (Math.random() - 0.5) * 0.2, -0.09 + (Math.random() - 0.5) * 0.2]
+			position: [51.505 + (Math.random() - 0.5) * 0.2, -0.09 + (Math.random() - 0.5) * 0.2],
+			name: `House Marker ${markers.length}`,
+			editable: false
 		};
 		setMarkers([...markers, newMarker]);
 	};
@@ -43,7 +48,9 @@ const PartyPage = () => {
 	const addSourceMarker = () => {
 		const newSourceMarker = {
 			id: driverMarkers.length,
-			position: [51.505 + (Math.random() - 0.5) * 0.2, -0.09 + (Math.random() - 0.5) * 0.2]
+			position: [51.505 + (Math.random() - 0.5) * 0.2, -0.09 + (Math.random() - 0.5) * 0.2],
+			name: `Driver Marker ${driverMarkers.length}`,
+			editable: false
 		};
 		setDriverMarkers([...driverMarkers, newSourceMarker]);
 	};
@@ -62,6 +69,7 @@ const PartyPage = () => {
 		let result = await response.json();
 		let decodedPolylines = decodePolyline(result);
 		setPolylines(decodedPolylines);
+		return decodedPolylines;
 	}
 
 	function decodePolyline(encodedPolyline) {
@@ -74,7 +82,7 @@ const PartyPage = () => {
 		return decodePolylines;
 	}
 
-	const sendMarkersToServer = () => {
+	const sendMarkersToServer = async () => {
 		const data = {
 			driverMarkers: driverMarkers,
 			destinationMarkers: destinationMarkers,
@@ -82,7 +90,8 @@ const PartyPage = () => {
 			allMarkers: [...driverMarkers, ...destinationMarkers, ...markers]
 		};
 
-		getRequest(data);
+		const decodedPolylines = await getRequest(data);
+		navigate('/route', { state: { markers, driverMarkers, destinationMarkers, decodedPolylines } });
 	}
 
 	const updateMarkerPosition = (id, newPosition, type = 'regular') => {
@@ -111,6 +120,51 @@ const PartyPage = () => {
 		const newPosition = event.target.getLatLng();
 		updateMarkerPosition(id, [newPosition.lat, newPosition.lng], type);
 	};
+
+	const toggleEditMode = (id, type = 'regular') => {
+		if (type === 'source') {
+			setDriverMarkers(
+				driverMarkers.map(marker =>
+					marker.id === id ? { ...marker, editable: !marker.editable } : marker
+				)
+			);
+		} else if (type === 'destination') {
+			setDestinationMarkers(
+				destinationMarkers.map(marker =>
+					marker.id === id ? { ...marker, editable: !marker.editable } : marker
+				)
+			);
+		} else {
+			setMarkers(
+				markers.map(marker =>
+					marker.id === id ? { ...marker, editable: !marker.editable } : marker
+				)
+			);
+		}
+	};
+
+	const handleNameChange = (id, newName, type = 'regular') => {
+		if (type === 'source') {
+			setDriverMarkers(
+				driverMarkers.map(marker =>
+					marker.id === id ? { ...marker, name: newName } : marker
+				)
+			);
+		} else if (type === 'destination') {
+			setDestinationMarkers(
+				destinationMarkers.map(marker =>
+					marker.id === id ? { ...marker, name: newName } : marker
+				)
+			);
+		} else {
+			setMarkers(
+				markers.map(marker =>
+					marker.id === id ? { ...marker, name: newName } : marker
+				)
+			);
+		}
+	};
+
 	const colors = ['blue', 'red', 'green', 'magenta','#215d17', 'cyan', 'purple', 'yellow', 'pink', 'brown' ];
 
 	return (
@@ -144,6 +198,19 @@ const PartyPage = () => {
 								ID: {marker.id}
 							</Tooltip>
 							<Popup>
+								{marker.editable ? (
+									<input
+										type="text"
+										value={marker.name}
+										onChange={e => handleNameChange(marker.id, e.target.value)}
+									/>
+								) : (
+									<span>{marker.name}</span>
+								)}
+								<button onClick={() => toggleEditMode(marker.id)}>
+									{marker.editable ? 'Save' : 'Edit'}
+								</button>
+								<br />
 								Marker {marker.id}: {marker.position[0].toFixed(4)}, {marker.position[1].toFixed(4)}
 							</Popup>
 						</Marker>
@@ -162,6 +229,19 @@ const PartyPage = () => {
 								ID: {sourceMarker.id}
 							</Tooltip>
 							<Popup>
+								{sourceMarker.editable ? (
+									<input
+										type="text"
+										value={sourceMarker.name}
+										onChange={e => handleNameChange(sourceMarker.id, e.target.value, 'source')}
+									/>
+								) : (
+									<span>{sourceMarker.name}</span>
+								)}
+								<button onClick={() => toggleEditMode(sourceMarker.id, 'source')}>
+									{sourceMarker.editable ? 'Save' : 'Edit'}
+								</button>
+								<br />
 								Source Marker {sourceMarker.id}: {sourceMarker.position[0].toFixed(4)}, {sourceMarker.position[1].toFixed(4)}
 							</Popup>
 						</Marker>
@@ -180,6 +260,19 @@ const PartyPage = () => {
 								ID: {destinationMarker.id}
 							</Tooltip>
 							<Popup>
+								{destinationMarker.editable ? (
+									<input
+										type="text"
+										value={destinationMarker.name}
+										onChange={e => handleNameChange(destinationMarker.id, e.target.value, 'destination')}
+									/>
+								) : (
+									<span>{destinationMarker.name}</span>
+								)}
+								<button onClick={() => toggleEditMode(destinationMarker.id, 'destination')}>
+									{destinationMarker.editable ? 'Save' : 'Edit'}
+								</button>
+								<br />
 								Destination Marker {destinationMarker.id}: {destinationMarker.position[0].toFixed(4)}, {destinationMarker.position[1].toFixed(4)}
 							</Popup>
 						</Marker>
@@ -195,6 +288,7 @@ const PartyPage = () => {
 					<thead>
 					<tr>
 						<th>House Marker ID</th>
+						<th>Name</th>
 						<th>Latitude</th>
 						<th>Longitude</th>
 					</tr>
@@ -203,6 +297,7 @@ const PartyPage = () => {
 					{markers.map(marker => (
 						<tr key={marker.id}>
 							<td>{marker.id}</td>
+							<td>{marker.name}</td>
 							<td>{marker.position[0].toFixed(4)}</td>
 							<td>{marker.position[1].toFixed(4)}</td>
 						</tr>
@@ -214,6 +309,7 @@ const PartyPage = () => {
 					<thead>
 					<tr>
 						<th>Driver Marker ID</th>
+						<th>Name</th>
 						<th>Latitude</th>
 						<th>Longitude</th>
 					</tr>
@@ -222,6 +318,7 @@ const PartyPage = () => {
 					{driverMarkers.map(marker => (
 						<tr key={marker.id}>
 							<td>{marker.id}</td>
+							<td>{marker.name}</td>
 							<td>{marker.position[0].toFixed(4)}</td>
 							<td>{marker.position[1].toFixed(4)}</td>
 						</tr>
@@ -233,6 +330,7 @@ const PartyPage = () => {
 					<thead>
 					<tr>
 						<th>Destination Marker ID</th>
+						<th>Name</th>
 						<th>Latitude</th>
 						<th>Longitude</th>
 					</tr>
@@ -241,6 +339,7 @@ const PartyPage = () => {
 					{destinationMarkers.map(marker => (
 						<tr key={marker.id}>
 							<td>{marker.id}</td>
+							<td>{marker.name}</td>
 							<td>{marker.position[0].toFixed(4)}</td>
 							<td>{marker.position[1].toFixed(4)}</td>
 						</tr>
