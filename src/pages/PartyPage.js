@@ -1,11 +1,11 @@
 // src/pages/PartyPage.js
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, Polyline } from 'react-leaflet';
+import React, {useState} from 'react';
+import {MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip} from 'react-leaflet';
 import polyline from '@mapbox/polyline';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import '../App.css';
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 
 const customIcon = L.icon({
 	iconUrl: 'https://cdn-icons-png.flaticon.com/512/609/609803.png',
@@ -168,7 +168,7 @@ const PartyPage = () => {
 	const colors = ['blue', 'red', 'green', 'magenta','#215d17', 'cyan', 'purple', 'yellow', 'pink', 'brown' ];
 
 	return (
-		<div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#82bfb7' }}>
+		<div style={{display: 'flex', height: '100vh', width: '100vw', background: '#82bfb7'}}>
 			<div style={{ flex: 1 }}>
 				<button onClick={addMarker} style={{ margin: '10px', padding: '10px' }}>
 					Add House Marker
