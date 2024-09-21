@@ -1,20 +1,13 @@
-import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import table
-from twilio.rest import Client
-from pydantic import BaseModel
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-print(os.getenv('TWILIO_ACCOUNT_SID'))
-print(os.getenv('TWILIO_AUTH_TOKEN'))
-print(os.getenv('FROM_WHATSAPP_NUMBER'))
-print(os.getenv('TO_WHATSAPP_NUMBER'))
+from routes import table, party, users
+from database.database import database, engine
+from database.models import Base
 
 app = FastAPI()
 
+# CORS settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,53 +17,17 @@ app.add_middleware(
 )
 
 app.include_router(table.router)
+app.include_router(party.router)
+app.include_router(users.router)
 
-class MessageRequest(BaseModel):
-    message: str
+@app.on_event("startup")
+async def startup():
+    await database.connect()
+    Base.metadata.create_all(bind=engine)
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@app.post("/sms")
-async def send_sms():
-    account_sid = os.getenv('TWILIO_ACCOUNT_SID')
-    auth_token = os.getenv('TWILIO_AUTH_TOKEN')
-    client = Client(account_sid, auth_token)
-
-    from_whatsapp_number = os.getenv('FROM_WHATSAPP_NUMBER')
-    to_whatsapp_number = os.getenv('TO_WHATSAPP_NUMBER')
-
-    message = client.messages.create(
-        from_=from_whatsapp_number,
-        body='Your appointment is coming up on July 21 at 3PM',
-        to=to_whatsapp_number
-    )
-
-    print(message.sid)
-
-    return {"message": "SMS sent successfully"}
-
-@app.post("/user")
-async def user_initiated(request: MessageRequest):
-    account_sid = os.getenv('TWILIO_ACCOUNT_SID')
-    auth_token = os.getenv('TWILIO_AUTH_TOKEN')
-    client = Client(account_sid, auth_token)
-
-    from_whatsapp_number = os.getenv('FROM_WHATSAPP_NUMBER')
-    to_whatsapp_number = os.getenv('TO_WHATSAPP_NUMBER')
-
-    try:
-        message = client.messages.create(
-            from_=from_whatsapp_number,
-            body=request.message,
-            to=to_whatsapp_number
-        )
-        print(message.sid)
-        return {"message": "SMS sent successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+@app.on_event("shutdown")
+async def shutdown():
+    await database.disconnect()
 
 if __name__ == "__main__":
     import uvicorn
