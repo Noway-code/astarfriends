@@ -10,6 +10,11 @@ const HomePage = () => {
 	const [showStart, setShowStart] = useState(false);
 	const [partyCode, setPartyCode] = useState('');
 	const [name, setName] = useState('');
+	const [date, setDate] = useState('');
+	const [time, setTime] = useState('');
+	const [description, setDescription] = useState('');
+	const [host, setHost] = useState('');
+	const [partyName, setPartyName] = useState('');
 
 	const handleJoinParty = () => {
 		setShowInput(!showInput);
@@ -21,7 +26,7 @@ const HomePage = () => {
 		setShowInput(false);
 	};
 
-	const handleSubmit = () => {
+	const handleJoinSubmit = () => {
 		const partyValid = partyCode.match('^\\d{5}$');
 		const nameValid = name.match('^[a-zA-Z _]{1,20}$');
 
@@ -31,8 +36,11 @@ const HomePage = () => {
 			myHeaders.append('Content-Type', 'application/json');
 
 			const raw = JSON.stringify({
-				name: name,
+				name: partyName,
+				host: host,
 				party_code: partyCode,
+				date: date,
+				time: time,
 			});
 
 			const requestOptions = {
@@ -51,6 +59,42 @@ const HomePage = () => {
 				.catch((error) => console.error('Error:', error));
 		} else {
 			alert('Invalid input! Please try again.');
+		}
+	};
+
+	const handlePartySubmit = () => {
+		const nameValid = host.match('^[a-zA-Z _]{1,20}$');
+		console.log(nameValid);
+
+		if (nameValid && date && time) { // Browser handles date and time validation
+			const url = 'http://localhost:8000/create-party';
+			const myHeaders = new Headers();
+			myHeaders.append('Content-Type', 'application/json');
+
+			const raw = JSON.stringify({
+				host: host,
+				name: partyName,
+				date: date,
+				time: time,
+				description: description || 'No description provided',
+			});
+			console.log(raw);
+			const requestOptions = {
+				method: 'POST',
+				headers: myHeaders,
+				body: raw,
+				redirect: 'follow',
+			};
+
+			fetch(url, requestOptions)
+				.then(response => response.json()) // Expecting JSON response
+				.then(result => {
+					console.log(result);
+					alert('Party created successfully! Party Code: ' + result.party_code);
+				})
+				.catch(error => console.error('Error:', error));
+		} else {
+			alert('Invalid input! Please check your data.');
 		}
 	};
 
@@ -113,7 +157,7 @@ const HomePage = () => {
 							/>
 						</div>
 						<button
-							onClick={handleSubmit}
+							onClick={handleJoinSubmit}
 							style={{
 								fontFamily: 'Jua, sans-serif',
 								padding: '12px 18px',
@@ -151,6 +195,7 @@ const HomePage = () => {
 						}}
 					>
 						<h1 style={{color: 'white'}}>Starting...</h1>
+
 						<div
 							style={{
 								display: 'grid',
@@ -161,30 +206,69 @@ const HomePage = () => {
 							<InputField
 								type="text"
 								placeholder="Enter your name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
+								value={host}
+								onChange={(e) => setHost(e.target.value)}
 							/>
 							<InputField
 								type="text"
-								placeholder="Enter a 5-digit party code"
-								value={partyCode}
-								onChange={(e) => setPartyCode(e.target.value)}
+								placeholder="Enter your event's name"
+								value={partyName}
+								onChange={(e) => setPartyName(e.target.value)}
 							/>
-							<InputField
-								type="text"
-								placeholder="Enter a 5-digit party code"
-								value={partyCode}
-								onChange={(e) => setPartyCode(e.target.value)}
+
+							<input
+								type="date"
+								value={date}
+								onChange={(e) => setDate(e.target.value)}
+								style={{
+									fontFamily: 'Jua, sans-serif',
+									padding: '12px 18px',
+									fontSize: '18px',
+									borderRadius: '8px',
+									border: '2px solid var(--primary-color)',
+									boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+									outline: 'none',
+									transition: 'border-color 0.3s, box-shadow 0.3s',
+								}}
 							/>
-							<InputField
-								type="text"
-								placeholder="Enter a 5-digit party code"
-								value={partyCode}
-								onChange={(e) => setPartyCode(e.target.value)}
+
+							<input
+								type="time"
+								value={time}
+								onChange={(e) => setTime(e.target.value)}
+								style={{
+									fontFamily: 'Jua, sans-serif',
+									padding: '12px 18px',
+									fontSize: '18px',
+									borderRadius: '8px',
+									border: '2px solid var(--primary-color)',
+									boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+									outline: 'none',
+									transition: 'border-color 0.3s, box-shadow 0.3s',
+								}}
+							/>
+							<textarea
+								value={description}
+								onChange={(e) => setDescription(e.target.value)}
+								placeholder="Enter a description"
+								rows={2}
+								style={{
+									fontFamily: 'Jua, sans-serif',
+									padding: '12px 4px',
+									fontSize: '18px',
+									borderRadius: '8px',
+									border: '2px solid var(--primary-color)',
+									boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+									width: '200%',
+									resize: 'vertical',
+									outline: 'none',
+									transition: 'border-color 0.3s, box-shadow 0.3s',
+								}}
 							/>
 						</div>
+
 						<button
-							onClick={handleSubmit}
+							onClick={handlePartySubmit}
 							style={{
 								fontFamily: 'Jua, sans-serif',
 								padding: '12px 18px',

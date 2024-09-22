@@ -8,6 +8,7 @@ const InputField = ({type, value, onChange, placeholder}) => {
 			value={value}
 			onChange={onChange}
 			style={{
+				fontFamily: 'Jua, sans-serif',
 				padding: '12px 18px',
 				fontSize: '18px',
 				borderRadius: '8px',
@@ -15,7 +16,6 @@ const InputField = ({type, value, onChange, placeholder}) => {
 				boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
 				outline: 'none',
 				transition: 'border-color 0.3s, box-shadow 0.3s',
-				textAlign: 'center',
 			}}
 			onFocus={(e) => {
 				e.target.style.borderColor = 'var(--secondary-color)';
