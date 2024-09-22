@@ -9,11 +9,9 @@ router = APIRouter()
 
 @router.post("/join-party")
 async def join_party(data: JoinPartyRequest, db: Session = Depends(get_db)):
-
     party = db.query(DBParty).filter(DBParty.party_code == data.party_code).first()
     if party is None:
         return {"error": "Party does not exist."}
-
 
     new_user = DBUsers(
         name=data.name,
