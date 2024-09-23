@@ -28,10 +28,10 @@ const destinationIcon = L.icon({
 	popupAnchor: [-3, -36]
 });
 
-const PartyPage = () => {
+const DebugPartyPage = () => {
 	const [driverMarkers, setDriverMarkers] = useState([]);
-	const [markers, setMarkers] = useState([{ id: 0, position: [51.505, -0.09], name: 'House Marker 0', editable: false }]);
-	const [destinationMarkers, setDestinationMarkers] = useState([{ id: 0, position: [51.515, -0.1], name: 'Destination Marker 0', editable: false }]);
+	const [markers, setMarkers] = useState([{id: 0, position: [51.505, -0.09], name: 'House Marker 0', editable: false}]);
+	const [destinationMarkers, setDestinationMarkers] = useState([{id: 0, position: [51.515, -0.1], name: 'Destination Marker 0', editable: false}]);
 	const [polylines, setPolylines] = useState([]);
 	const navigate = useNavigate();
 
@@ -91,26 +91,26 @@ const PartyPage = () => {
 		};
 
 		const decodedPolylines = await getRequest(data);
-		navigate('/route', { state: { markers, driverMarkers, destinationMarkers, decodedPolylines } });
+		navigate('/route', {state: {markers, driverMarkers, destinationMarkers, decodedPolylines}});
 	}
 
 	const updateMarkerPosition = (id, newPosition, type = 'regular') => {
 		if (type === 'source') {
 			setDriverMarkers(
 				driverMarkers.map(marker =>
-					marker.id === id ? { ...marker, position: newPosition } : marker
+					marker.id === id ? {...marker, position: newPosition} : marker
 				)
 			);
 		} else if (type === 'destination') {
 			setDestinationMarkers(
 				destinationMarkers.map(marker =>
-					marker.id === id ? { ...marker, position: newPosition } : marker
+					marker.id === id ? {...marker, position: newPosition} : marker
 				)
 			);
 		} else {
 			setMarkers(
 				markers.map(marker =>
-					marker.id === id ? { ...marker, position: newPosition } : marker
+					marker.id === id ? {...marker, position: newPosition} : marker
 				)
 			);
 		}
@@ -125,19 +125,19 @@ const PartyPage = () => {
 		if (type === 'source') {
 			setDriverMarkers(
 				driverMarkers.map(marker =>
-					marker.id === id ? { ...marker, editable: !marker.editable } : marker
+					marker.id === id ? {...marker, editable: !marker.editable} : marker
 				)
 			);
 		} else if (type === 'destination') {
 			setDestinationMarkers(
 				destinationMarkers.map(marker =>
-					marker.id === id ? { ...marker, editable: !marker.editable } : marker
+					marker.id === id ? {...marker, editable: !marker.editable} : marker
 				)
 			);
 		} else {
 			setMarkers(
 				markers.map(marker =>
-					marker.id === id ? { ...marker, editable: !marker.editable } : marker
+					marker.id === id ? {...marker, editable: !marker.editable} : marker
 				)
 			);
 		}
@@ -147,39 +147,40 @@ const PartyPage = () => {
 		if (type === 'source') {
 			setDriverMarkers(
 				driverMarkers.map(marker =>
-					marker.id === id ? { ...marker, name: newName } : marker
+					marker.id === id ? {...marker, name: newName} : marker
 				)
 			);
 		} else if (type === 'destination') {
 			setDestinationMarkers(
 				destinationMarkers.map(marker =>
-					marker.id === id ? { ...marker, name: newName } : marker
+					marker.id === id ? {...marker, name: newName} : marker
 				)
 			);
 		} else {
 			setMarkers(
 				markers.map(marker =>
-					marker.id === id ? { ...marker, name: newName } : marker
+					marker.id === id ? {...marker, name: newName} : marker
 				)
 			);
 		}
 	};
 
-	const colors = ['blue', 'red', 'green', 'magenta','#215d17', 'cyan', 'purple', 'yellow', 'pink', 'brown' ];
+	const colors = ['blue', 'red', 'green', 'magenta', '#215d17', 'cyan', 'purple', 'yellow', 'pink', 'brown'];
 
 	return (
 		<div style={{display: 'flex', height: '100vh', width: '100vw', background: '#82bfb7'}}>
-			<div style={{ flex: 1 }}>
-				<button onClick={addMarker} style={{ margin: '10px', padding: '10px' }}>
+			<div style={{flex: 1}}>
+				<button onClick={addMarker} style={{margin: '10px', padding: '10px'}}>
 					Add House Marker
 				</button>
-				<button onClick={addSourceMarker} style={{ margin: '10px', padding: '10px' }}>
+				<button onClick={addSourceMarker} style={{margin: '10px', padding: '10px'}}>
 					Add Driver Marker
 				</button>
-				<button onClick={sendMarkersToServer} style={{ margin: '10px', padding: '10px', color:"forestgreen", fontWeight:"bold", fontSize:"14px"}}>
+				<button onClick={sendMarkersToServer}
+				        style={{margin: '10px', padding: '10px', color: "forestgreen", fontWeight: "bold", fontSize: "14px"}}>
 					Send data down to server
 				</button>
-				<MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: '80vh', width: '100%', margin: '10px' }}>
+				<MapContainer center={[51.505, -0.09]} zoom={13} style={{height: '80vh', width: '100%', margin: '10px'}}>
 					<TileLayer
 						url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -210,7 +211,7 @@ const PartyPage = () => {
 								<button onClick={() => toggleEditMode(marker.id)}>
 									{marker.editable ? 'Save' : 'Edit'}
 								</button>
-								<br />
+								<br/>
 								Marker {marker.id}: {marker.position[0].toFixed(4)}, {marker.position[1].toFixed(4)}
 							</Popup>
 						</Marker>
@@ -241,7 +242,7 @@ const PartyPage = () => {
 								<button onClick={() => toggleEditMode(sourceMarker.id, 'source')}>
 									{sourceMarker.editable ? 'Save' : 'Edit'}
 								</button>
-								<br />
+								<br/>
 								Source Marker {sourceMarker.id}: {sourceMarker.position[0].toFixed(4)}, {sourceMarker.position[1].toFixed(4)}
 							</Popup>
 						</Marker>
@@ -272,17 +273,18 @@ const PartyPage = () => {
 								<button onClick={() => toggleEditMode(destinationMarker.id, 'destination')}>
 									{destinationMarker.editable ? 'Save' : 'Edit'}
 								</button>
-								<br />
-								Destination Marker {destinationMarker.id}: {destinationMarker.position[0].toFixed(4)}, {destinationMarker.position[1].toFixed(4)}
+								<br/>
+								Destination
+								Marker {destinationMarker.id}: {destinationMarker.position[0].toFixed(4)}, {destinationMarker.position[1].toFixed(4)}
 							</Popup>
 						</Marker>
 					))}
 					{polylines.map((polyline, index) => (
-						<Polyline key={index} positions={polyline} color={colors[index % colors.length]} weight={5} />
+						<Polyline key={index} positions={polyline} color={colors[index % colors.length]} weight={5}/>
 					))}
 				</MapContainer>
 			</div>
-			<div style={{ flex: 0.3, padding: '20px' }}>
+			<div style={{flex: 0.3, padding: '20px'}}>
 				<h3>House Marker Positions</h3>
 				<table border="1" cellPadding="10">
 					<thead>
@@ -351,4 +353,4 @@ const PartyPage = () => {
 	);
 };
 
-export default PartyPage;
+export default DebugPartyPage;

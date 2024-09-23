@@ -1,8 +1,10 @@
 import React, {useEffect} from 'react';
 import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
-import PartyPage from './pages/PartyPage';
+import DebugPartyPage from './pages/DebugPartyPage';
 import RoutePage from './pages/RoutePage';
 import HomePage from './pages/HomePage';
+import GuestPage from './pages/PartyPages/GuestPage';
+import HostPage from './pages/PartyPages/HostPage';
 import WebFont from 'webfontloader';
 
 const App = () => {
@@ -18,8 +20,10 @@ const App = () => {
 		<Router>
 			<Routes>
 				<Route path="/" element={<HomePage/>}/>
-				<Route path="/party" element={<PartyPage/>}/>
-				<Route path="/route" element={<RoutePage/>}/>
+				<Route path="/party/host" element={<HostPage/>}/>
+				<Route path="/party/guest" element={<GuestPage/>}/>
+				<Route path="/party/route" element={<RoutePage/>}/>
+				<Route path="/DebugPartyPage" element={<DebugPartyPage/>}/>
 			</Routes>
 		</Router>
 	);

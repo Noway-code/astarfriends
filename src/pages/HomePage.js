@@ -2,8 +2,8 @@ import React, {useState} from 'react';
 import 'leaflet/dist/leaflet.css';
 import '../App.css';
 import {PrimaryButton} from '../components/PrimaryButton';
-import 'reactjs-popup/dist/index.css';
 import InputField from '../components/InputField';
+import {useNavigate} from 'react-router-dom';
 
 const HomePage = () => {
 	const [showInput, setShowInput] = useState(false);
@@ -15,6 +15,7 @@ const HomePage = () => {
 	const [description, setDescription] = useState('');
 	const [host, setHost] = useState('');
 	const [partyName, setPartyName] = useState('');
+	const navigate = useNavigate();
 
 	const handleJoinParty = () => {
 		setShowInput(!showInput);
@@ -24,6 +25,42 @@ const HomePage = () => {
 	const handleStartParty = () => {
 		setShowStart(!showStart);
 		setShowInput(false);
+	};
+
+	const handleStartPartySubmit = () => {
+		const nameValid = host.match('^[a-zA-Z _]{1,20}$');
+		console.log(nameValid);
+
+		if (nameValid && date && time) {
+			const url = 'http://localhost:8000/create-party';
+			const myHeaders = new Headers();
+			myHeaders.append('Content-Type', 'application/json');
+
+			const raw = JSON.stringify({
+				host: host,
+				name: partyName,
+				date: date,
+				time: time,
+				description: description || 'No description provided',
+			});
+			const requestOptions = {
+				method: 'POST',
+				headers: myHeaders,
+				body: raw,
+				redirect: 'follow',
+			};
+
+			fetch(url, requestOptions)
+				.then(response => response.json()) // Expecting JSON response
+				.then(result => {
+					console.log(result);
+					alert('Party created successfully! Party Code: ' + result.party_code);
+					navigate('/party/host', {state: {host, partyName, date, time, description, partyCode: result.party_code}});
+				})
+				.catch(error => console.error('Error:', error));
+		} else {
+			alert('Invalid input! Please check your data.');
+		}
 	};
 
 	const handleJoinSubmit = () => {
@@ -36,11 +73,8 @@ const HomePage = () => {
 			myHeaders.append('Content-Type', 'application/json');
 
 			const raw = JSON.stringify({
-				name: partyName,
-				host: host,
+				name: name,
 				party_code: partyCode,
-				date: date,
-				time: time,
 			});
 
 			const requestOptions = {
@@ -55,46 +89,11 @@ const HomePage = () => {
 				.then((result) => {
 					console.log(result);
 					alert('Navigating to the Party Page!');
+					navigate('/party/guest', {state: {name, partyCode}});
 				})
 				.catch((error) => console.error('Error:', error));
 		} else {
 			alert('Invalid input! Please try again.');
-		}
-	};
-
-	const handlePartySubmit = () => {
-		const nameValid = host.match('^[a-zA-Z _]{1,20}$');
-		console.log(nameValid);
-
-		if (nameValid && date && time) { // Browser handles date and time validation
-			const url = 'http://localhost:8000/create-party';
-			const myHeaders = new Headers();
-			myHeaders.append('Content-Type', 'application/json');
-
-			const raw = JSON.stringify({
-				host: host,
-				name: partyName,
-				date: date,
-				time: time,
-				description: description || 'No description provided',
-			});
-			console.log(raw);
-			const requestOptions = {
-				method: 'POST',
-				headers: myHeaders,
-				body: raw,
-				redirect: 'follow',
-			};
-
-			fetch(url, requestOptions)
-				.then(response => response.json()) // Expecting JSON response
-				.then(result => {
-					console.log(result);
-					alert('Party created successfully! Party Code: ' + result.party_code);
-				})
-				.catch(error => console.error('Error:', error));
-		} else {
-			alert('Invalid input! Please check your data.');
 		}
 	};
 
@@ -268,7 +267,7 @@ const HomePage = () => {
 						</div>
 
 						<button
-							onClick={handlePartySubmit}
+							onClick={handleStartPartySubmit}
 							style={{
 								fontFamily: 'Jua, sans-serif',
 								padding: '12px 18px',
